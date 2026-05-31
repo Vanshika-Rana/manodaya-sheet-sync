@@ -15,13 +15,22 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
   <header class="header">
     <div class="header-brand">
-      <img class="header-logo" src="icons/icon-192.png" width="36" height="36" alt="">
-      <div>
+      <div class="header-logo-wrap" aria-hidden="true">
+        <svg class="header-logo-svg" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+          <rect width="44" height="44" fill="#1a5c3a"/>
+          <polygon points="22,8 8,22 36,22" fill="#e8ddd0"/>
+          <rect x="12" y="22" width="20" height="14" rx="2" fill="#faf9f5"/>
+          <rect x="19" y="27" width="6" height="9" rx="1" fill="#7a3010"/>
+          <rect x="14" y="25" width="5" height="5" rx="1" fill="#edf7f1" stroke="#1a5c3a" stroke-width="0.75"/>
+          <rect x="25" y="25" width="5" height="5" rx="1" fill="#edf7f1" stroke="#1a5c3a" stroke-width="0.75"/>
+        </svg>
+      </div>
+      <div class="header-text">
         <h1 class="header-title">Manodaya Homes</h1>
         <p class="header-sub">Homestay income tracker</p>
       </div>
@@ -47,7 +56,10 @@
           <div class="field-row">
             <div class="field">
               <label class="field-label" for="booker">Booked by</label>
-              <select class="field-select" id="booker" name="booker" required></select>
+              <select class="field-select" id="booker" name="booker" required>
+                <option value="Virender Rana">Virender Rana</option>
+                <option value="Rakesh Rana">Rakesh Rana</option>
+              </select>
             </div>
             <div class="field">
               <label class="field-label" for="type">Booking type</label>
@@ -206,12 +218,12 @@
     </button>
   </nav>
 
-  <script src="config.js"></script>
-  <script src="app.js"></script>
+  <script src="config.js?v=3"></script>
+  <script src="app.js?v=3"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js").catch(() => {});
+        navigator.serviceWorker.register("./sw.js?v=3").catch(() => {});
       });
     }
   </script>

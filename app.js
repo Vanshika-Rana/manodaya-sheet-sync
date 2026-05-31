@@ -139,11 +139,13 @@ function populateSelect(select, options) {
 }
 
 function populateRooms() {
-  populateSelect(roomSelect, CONFIG.ROOMS);
+  const rooms = CONFIG.ROOMS || ["Room 1", "Room 2", "Room 3", "Room 4", "Room 5"];
+  populateSelect(roomSelect, rooms);
 }
 
 function populateBookers() {
-  populateSelect(bookerSelect, CONFIG.BOOKERS);
+  const bookers = CONFIG.BOOKERS || ["Virender Rana", "Rakesh Rana"];
+  populateSelect(bookerSelect, bookers);
 }
 
 function updateSaveButtonStyle() {
