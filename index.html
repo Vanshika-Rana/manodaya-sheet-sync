@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Manodaya Homes — homestay booking income tracker">
+  <meta name="theme-color" content="#1a5c3a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Manodaya">
+  <title>Manodaya Homes</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="header">
+    <h1 class="header-title">Manodaya Homes</h1>
+    <span id="sync-dot" class="sync-dot" title="Sync status" aria-label="All bookings synced"></span>
+  </header>
+
+  <main class="main">
+    <!-- Entry -->
+    <section id="screen-entry" class="screen screen-active" aria-label="New booking">
+      <form id="entry-form" class="entry-form" novalidate>
+        <div class="type-toggle" role="group" aria-label="Booking type">
+          <button type="button" class="type-toggle-btn type-toggle-btn--active" data-type="online" aria-pressed="true">
+            Pre-book
+          </button>
+          <button type="button" class="type-toggle-btn" data-type="walkin" aria-pressed="false">
+            Walk-in
+          </button>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="guest">Guest name</label>
+          <input class="field-input" type="text" id="guest" name="guest" required autocomplete="name" placeholder="Full name">
+          <p class="field-error" id="guest-error" hidden></p>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="room">Room</label>
+          <select class="field-select" id="room" name="room"></select>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label class="field-label" for="checkin">Check-in</label>
+            <input class="field-input" type="date" id="checkin" name="checkin" required>
+          </div>
+          <div class="field">
+            <label class="field-label" for="checkout">Check-out</label>
+            <input class="field-input" type="date" id="checkout" name="checkout" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="amount">Room amount ₹</label>
+          <input class="field-input" type="number" id="amount" name="amount" required min="0" step="1" inputmode="numeric" placeholder="0">
+          <p class="field-error" id="amount-error" hidden></p>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="payment">Payment mode</label>
+          <select class="field-select" id="payment" name="payment">
+            <option value="Cash">Cash</option>
+            <option value="UPI">UPI</option>
+            <option value="Card">Card</option>
+            <option value="Bank Transfer">Bank Transfer</option>
+          </select>
+        </div>
+
+        <div class="field field-checkbox">
+          <label class="checkbox-label">
+            <input type="checkbox" id="hasFood" name="hasFood">
+            <span class="checkbox-text">Food included?</span>
+          </label>
+        </div>
+
+        <div id="food-fields" class="food-fields" hidden>
+          <div class="field">
+            <label class="field-label" for="foodAmount">Food amount ₹</label>
+            <input class="field-input" type="number" id="foodAmount" name="foodAmount" min="0" step="1" inputmode="numeric" placeholder="0">
+          </div>
+          <div class="field">
+            <label class="field-label" for="foodBill">Bill no.</label>
+            <input class="field-input" type="text" id="foodBill" name="foodBill" placeholder="Bill number">
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="contact">Contact</label>
+          <input class="field-input" type="tel" id="contact" name="contact" autocomplete="tel" placeholder="Phone number">
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="notes">Notes <span class="field-optional">(optional)</span></label>
+          <input class="field-input" type="text" id="notes" name="notes" placeholder="Any notes">
+        </div>
+
+        <button type="submit" id="save-btn" class="btn btn-save btn-save--online">Save Booking</button>
+      </form>
+
+      <div id="success-toast" class="success-toast" hidden role="status" aria-live="polite"></div>
+    </section>
+
+    <!-- Ledger -->
+    <section id="screen-ledger" class="screen" aria-label="Booking ledger" hidden>
+      <div id="ledger-list" class="ledger-list"></div>
+    </section>
+
+    <!-- Summary -->
+    <section id="screen-summary" class="screen" aria-label="Income summary" hidden>
+      <div class="summary-hero">
+        <p class="summary-label">Today's income</p>
+        <p id="summary-today" class="summary-today">₹0</p>
+      </div>
+
+      <div class="summary-card">
+        <p class="summary-label">This month</p>
+        <p id="summary-month" class="summary-month">₹0</p>
+      </div>
+
+      <div class="summary-split">
+        <div class="stat-box stat-box--online">
+          <p class="stat-label">Online</p>
+          <p id="summary-online" class="stat-value">₹0</p>
+        </div>
+        <div class="stat-box stat-box--walkin">
+          <p class="stat-label">Walk-in</p>
+          <p id="summary-walkin" class="stat-value">₹0</p>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <h2 class="summary-heading">By room this month</h2>
+        <ul id="summary-rooms" class="room-list"></ul>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Main navigation">
+    <button type="button" class="nav-btn nav-btn--active" data-screen="entry" aria-current="page">
+      <i class="ti ti-plus nav-icon" aria-hidden="true"></i>
+      <span class="nav-label">Entry</span>
+    </button>
+    <button type="button" class="nav-btn" data-screen="ledger">
+      <i class="ti ti-list nav-icon" aria-hidden="true"></i>
+      <span class="nav-label">Ledger</span>
+    </button>
+    <button type="button" class="nav-btn" data-screen="summary">
+      <i class="ti ti-chart-bar nav-icon" aria-hidden="true"></i>
+      <span class="nav-label">Summary</span>
+    </button>
+  </nav>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
