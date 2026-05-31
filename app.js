@@ -102,10 +102,14 @@ async function syncBooking(booking) {
   }
 
   try {
+    const params = new URLSearchParams();
+    params.append("data", JSON.stringify(booking));
+
     await fetch(CONFIG.SHEET_URL, {
       method: "POST",
       mode: "no-cors",
-      body: JSON.stringify(booking),
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params.toString(),
     });
     return true;
   } catch {
