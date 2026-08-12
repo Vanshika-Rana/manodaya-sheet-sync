@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-  <link rel="stylesheet" href="style.css?v=8">
+  <link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
   <header class="header">
@@ -206,8 +206,6 @@
 
         <button type="submit" id="save-btn" class="btn btn-save">Save Booking</button>
       </form>
-
-      <div id="success-toast" class="success-toast" hidden role="status" aria-live="polite"></div>
     </section>
 
     <!-- Ledger -->
@@ -271,8 +269,19 @@
     </button>
   </nav>
 
-  <script src="config.js?v=8"></script>
-  <script src="app.js?v=8"></script>
+  <div id="success-modal" class="success-modal" hidden role="dialog" aria-modal="true" aria-labelledby="success-modal-title">
+    <div class="success-modal-backdrop"></div>
+    <div class="success-modal-card">
+      <div class="success-modal-icon" aria-hidden="true">
+        <i class="ti ti-circle-check"></i>
+      </div>
+      <p id="success-modal-title" class="success-modal-title">Saved successfully</p>
+      <p id="success-modal-message" class="success-modal-message" hidden></p>
+    </div>
+  </div>
+
+  <script src="config.js?v=9"></script>
+  <script src="app.js?v=9"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

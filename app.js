@@ -28,10 +28,14 @@ const foodBillInput = $("#foodBill");
 const contactInput = $("#contact");
 const notesInput = $("#notes");
 const saveBtn = $("#save-btn");
+const SAVE_BTN_LABEL = "Save Booking";
 const receiptError = $("#receipt-error");
 const guestError = $("#guest-error");
 const amountError = $("#amount-error");
-const successToast = $("#success-toast");
+const successModal = $("#success-modal");
+const successModalTitle = $("#success-modal-title");
+const successModalMessage = $("#success-modal-message");
+const successModalIcon = $(".success-modal-icon i");
 const syncDot = $("#sync-dot");
 const syncLabel = $("#sync-label");
 const ledgerList = $("#ledger-list");
@@ -213,14 +217,34 @@ function showError(el, errorEl, message) {
   el.classList.add("field-input--error");
 }
 
-function showToast(message, offline = false) {
-  successToast.textContent = message;
-  successToast.classList.toggle("success-toast--offline", offline);
-  successToast.hidden = false;
+function setSaveLoading(loading) {
+  saveBtn.disabled = loading;
+  saveBtn.classList.toggle("btn-save--loading", loading);
+  saveBtn.setAttribute("aria-busy", String(loading));
+
+  if (loading) {
+    saveBtn.innerHTML =
+      '<span class="btn-spinner" aria-hidden="true"></span>Saving…';
+  } else {
+    saveBtn.textContent = SAVE_BTN_LABEL;
+  }
+}
+
+function showSuccessModal(title, message = "") {
+  const isSuccess = title === "Saved successfully";
+
+  successModalTitle.textContent = title;
+  successModalMessage.textContent = message;
+  successModalMessage.hidden = !message;
+  successModal.classList.toggle("success-modal--offline", !isSuccess);
+  successModalIcon.className = isSuccess ? "ti ti-circle-check" : "ti ti-cloud-off";
+  successModal.hidden = false;
+  document.body.classList.add("modal-open");
 
   setTimeout(() => {
-    successToast.hidden = true;
-  }, 2000);
+    successModal.hidden = true;
+    document.body.classList.remove("modal-open");
+  }, 2200);
 }
 
 async function handleSave(e) {
@@ -250,49 +274,58 @@ async function handleSave(e) {
 
   if (!valid) return;
 
-  const roomTypeBreakdown = getRoomTypeBreakdown();
-  const totalRooms = getTotalRooms();
-  const isOther = hasFoodCheckbox.checked && mealPlanSelect.value === "Other";
+  setSaveLoading(true);
 
-  const booking = {
-    id: Date.now(),
-    date: todayISO(),
-    receipt,
-    booker: bookerSelect.value,
-    guest,
-    contact: contactInput.value.trim(),
-    roomTypeBreakdown,
-    totalRooms,
-    type: typeSelect.value,
-    checkin: checkinInput.value,
-    checkout: checkoutInput.value,
-    amount,
-    hasFood: hasFoodCheckbox.checked,
-    mealPlan: hasFoodCheckbox.checked ? mealPlanSelect.value : "",
-    mealPlanOther: isOther ? mealPlanOtherInput.value.trim() : "",
-    foodAmount: hasFoodCheckbox.checked ? Number(foodAmountInput.value) || 0 : 0,
-    foodBill: hasFoodCheckbox.checked ? foodBillInput.value.trim() : "",
-    payment: paymentSelect.value,
-    notes: notesInput.value.trim(),
-    synced: false,
-  };
+  try {
+    const roomTypeBreakdown = getRoomTypeBreakdown();
+    const totalRooms = getTotalRooms();
+    const isOther = hasFoodCheckbox.checked && mealPlanSelect.value === "Other";
 
-  bookings.push(booking);
-  saveBookings();
+    const booking = {
+      id: Date.now(),
+      date: todayISO(),
+      receipt,
+      booker: bookerSelect.value,
+      guest,
+      contact: contactInput.value.trim(),
+      roomTypeBreakdown,
+      totalRooms,
+      type: typeSelect.value,
+      checkin: checkinInput.value,
+      checkout: checkoutInput.value,
+      amount,
+      hasFood: hasFoodCheckbox.checked,
+      mealPlan: hasFoodCheckbox.checked ? mealPlanSelect.value : "",
+      mealPlanOther: isOther ? mealPlanOtherInput.value.trim() : "",
+      foodAmount: hasFoodCheckbox.checked ? Number(foodAmountInput.value) || 0 : 0,
+      foodBill: hasFoodCheckbox.checked ? foodBillInput.value.trim() : "",
+      payment: paymentSelect.value,
+      notes: notesInput.value.trim(),
+      synced: false,
+    };
 
-  const synced = await syncBooking(booking);
-  if (synced) {
-    booking.synced = true;
+    bookings.push(booking);
     saveBookings();
-    showToast("Booking saved & synced ✓");
-  } else {
-    showToast("Saved offline — will sync when online", true);
-  }
 
-  updateSyncDot();
-  renderLedger();
-  renderSummary();
-  resetForm();
+    const synced = await syncBooking(booking);
+    if (synced) {
+      booking.synced = true;
+      saveBookings();
+      showSuccessModal("Saved successfully");
+    } else {
+      showSuccessModal(
+        "Saved offline",
+        "Will sync when you're back online."
+      );
+    }
+
+    updateSyncDot();
+    renderLedger();
+    renderSummary();
+    resetForm();
+  } finally {
+    setSaveLoading(false);
+  }
 }
 
 function switchScreen(name) {
