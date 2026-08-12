@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
   <header class="header">
@@ -35,9 +35,20 @@
         <p class="header-sub">Homestay income tracker</p>
       </div>
     </div>
-    <div class="sync-status">
-      <span id="sync-dot" class="sync-dot" aria-hidden="true"></span>
-      <span id="sync-label" class="sync-label">Synced</span>
+    <div class="header-actions">
+      <a
+        class="open-sheet-btn"
+        href="https://docs.google.com/spreadsheets/d/14hVIKMywyJrOonNHXOCaGOnI6TNJuJW7L8ZSzObTxes/edit"
+        target="_blank"
+        rel="noopener"
+      >
+        <i class="ti ti-external-link" aria-hidden="true"></i>
+        <span>Sheet</span>
+      </a>
+      <div class="sync-status">
+        <span id="sync-dot" class="sync-dot" aria-hidden="true"></span>
+        <span id="sync-label" class="sync-label">Synced</span>
+      </div>
     </div>
   </header>
 
@@ -50,6 +61,16 @@
       </div>
 
       <form id="entry-form" class="entry-form" novalidate>
+        <div class="form-card">
+          <h3 class="form-card-title"><i class="ti ti-receipt" aria-hidden="true"></i> Receipt</h3>
+
+          <div class="field">
+            <label class="field-label" for="receipt">Receipt no.</label>
+            <input class="field-input" type="text" id="receipt" name="receipt" required placeholder="e.g. 0231">
+            <p class="field-error" id="receipt-error" hidden></p>
+          </div>
+        </div>
+
         <div class="form-card">
           <h3 class="form-card-title"><i class="ti ti-user" aria-hidden="true"></i> Who &amp; how</h3>
 
@@ -86,8 +107,26 @@
           <h3 class="form-card-title"><i class="ti ti-bed" aria-hidden="true"></i> Stay details</h3>
 
           <div class="field">
-            <label class="field-label" for="room">Room</label>
-            <select class="field-select" id="room" name="room"></select>
+            <label class="field-label">Room type &amp; count</label>
+            <div class="room-type-rows">
+              <div class="room-type-row">
+                <span class="room-type-name">Two Bed</span>
+                <input class="field-input field-input--count room-type-count" type="number" data-room-type="Two Bed" min="0" step="1" inputmode="numeric" value="0">
+              </div>
+              <div class="room-type-row">
+                <span class="room-type-name">Three Bed</span>
+                <input class="field-input field-input--count room-type-count" type="number" data-room-type="Three Bed" min="0" step="1" inputmode="numeric" value="0">
+              </div>
+              <div class="room-type-row">
+                <span class="room-type-name">Four Bed</span>
+                <input class="field-input field-input--count room-type-count" type="number" data-room-type="Four Bed" min="0" step="1" inputmode="numeric" value="0">
+              </div>
+            </div>
+          </div>
+
+          <div class="field total-rooms-field">
+            <span class="field-label">Total no. of rooms</span>
+            <p id="totalRoomsDisplay" class="total-rooms-display">0</p>
           </div>
 
           <div class="field-row">
@@ -131,6 +170,20 @@
           </div>
 
           <div id="food-fields" class="food-fields" hidden>
+            <div class="field">
+              <label class="field-label" for="mealPlan">Meal plan</label>
+              <select class="field-select" id="mealPlan" name="mealPlan">
+                <option value="CP">CP</option>
+                <option value="MAP">MAP</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div class="field" id="meal-plan-other-field" hidden>
+              <label class="field-label" for="mealPlanOther">Specify meal plan</label>
+              <input class="field-input" type="text" id="mealPlanOther" name="mealPlanOther" placeholder="e.g. Breakfast only">
+            </div>
+
             <div class="field-row">
               <div class="field">
                 <label class="field-label" for="foodAmount">Food amount ₹</label>
@@ -197,7 +250,7 @@
       </div>
 
       <div class="summary-card">
-        <h2 class="summary-heading">By room this month</h2>
+        <h2 class="summary-heading">Room types booked this month</h2>
         <ul id="summary-rooms" class="room-list"></ul>
       </div>
     </section>
@@ -218,12 +271,12 @@
     </button>
   </nav>
 
-  <script src="config.js?v=3"></script>
-  <script src="app.js?v=3"></script>
+  <script src="config.js?v=8"></script>
+  <script src="app.js?v=8"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=3").catch(() => {});
+        navigator.serviceWorker.register("./sw.js?v=8").catch(() => {});
       });
     }
   </script>

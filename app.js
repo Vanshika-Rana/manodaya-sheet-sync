@@ -8,21 +8,27 @@ const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
 const entryForm = $("#entry-form");
+const receiptInput = $("#receipt");
 const bookerSelect = $("#booker");
 const typeSelect = $("#type");
 const guestInput = $("#guest");
-const roomSelect = $("#room");
+const roomTypeCountInputs = $$(".room-type-count");
+const totalRoomsDisplay = $("#totalRoomsDisplay");
 const checkinInput = $("#checkin");
 const checkoutInput = $("#checkout");
 const amountInput = $("#amount");
 const paymentSelect = $("#payment");
 const hasFoodCheckbox = $("#hasFood");
 const foodFields = $("#food-fields");
+const mealPlanSelect = $("#mealPlan");
+const mealPlanOtherField = $("#meal-plan-other-field");
+const mealPlanOtherInput = $("#mealPlanOther");
 const foodAmountInput = $("#foodAmount");
 const foodBillInput = $("#foodBill");
 const contactInput = $("#contact");
 const notesInput = $("#notes");
 const saveBtn = $("#save-btn");
+const receiptError = $("#receipt-error");
 const guestError = $("#guest-error");
 const amountError = $("#amount-error");
 const successToast = $("#success-toast");
@@ -62,6 +68,14 @@ function bookingTotal(booking) {
   const room = Number(booking.amount) || 0;
   const food = booking.hasFood ? Number(booking.foodAmount) || 0 : 0;
   return room + food;
+}
+
+function mealPlanLabel(booking) {
+  if (!booking.hasFood) return "";
+  if (booking.mealPlan === "Other") {
+    return booking.mealPlanOther ? booking.mealPlanOther : "Other";
+  }
+  return booking.mealPlan || "";
 }
 
 function escapeHtml(str) {
@@ -136,25 +150,38 @@ async function retryUnsynced() {
   }
 }
 
-function populateSelect(select, options) {
-  select.innerHTML = options
-    .map((opt) => `<option value="${escapeHtml(opt)}">${escapeHtml(opt)}</option>`)
-    .join("");
-}
-
-function populateRooms() {
-  const rooms = CONFIG.ROOMS || ["Room 1", "Room 2", "Room 3", "Room 4", "Room 5"];
-  populateSelect(roomSelect, rooms);
-}
-
 function populateBookers() {
   const bookers = CONFIG.BOOKERS || ["Virender Rana", "Rakesh Rana"];
-  populateSelect(bookerSelect, bookers);
+  bookerSelect.innerHTML = bookers
+    .map((opt) => `<option value="${escapeHtml(opt)}">${escapeHtml(opt)}</option>`)
+    .join("");
 }
 
 function updateSaveButtonStyle() {
   const isWalkin = typeSelect.value === "walkin";
   saveBtn.classList.toggle("btn-save--walkin", isWalkin);
+}
+
+function getRoomTypeBreakdown() {
+  return [...roomTypeCountInputs]
+    .map((input) => ({
+      type: input.dataset.roomType,
+      count: Number(input.value) || 0,
+    }))
+    .filter((r) => r.count > 0);
+}
+
+function getTotalRooms() {
+  return [...roomTypeCountInputs].reduce((sum, input) => sum + (Number(input.value) || 0), 0);
+}
+
+function updateTotalRoomsDisplay() {
+  totalRoomsDisplay.textContent = String(getTotalRooms());
+}
+
+function roomTypeText(breakdown) {
+  if (!breakdown || !breakdown.length) return "—";
+  return breakdown.map((r) => `${r.type} x${r.count}`).join(", ");
 }
 
 function resetForm() {
@@ -163,14 +190,19 @@ function resetForm() {
   typeSelect.value = savedType;
   checkinInput.value = todayISO();
   checkoutInput.value = todayISO();
+  roomTypeCountInputs.forEach((input) => { input.value = 0; });
+  updateTotalRoomsDisplay();
   foodFields.hidden = true;
+  mealPlanOtherField.hidden = true;
   updateSaveButtonStyle();
   clearErrors();
 }
 
 function clearErrors() {
+  receiptError.hidden = true;
   guestError.hidden = true;
   amountError.hidden = true;
+  receiptInput.classList.remove("field-input--error");
   guestInput.classList.remove("field-input--error");
   amountInput.classList.remove("field-input--error");
 }
@@ -195,10 +227,16 @@ async function handleSave(e) {
   e.preventDefault();
   clearErrors();
 
+  const receipt = receiptInput.value.trim();
   const guest = guestInput.value.trim();
   const amount = Number(amountInput.value);
 
   let valid = true;
+
+  if (!receipt) {
+    showError(receiptInput, receiptError, "Receipt no. is required");
+    valid = false;
+  }
 
   if (!guest) {
     showError(guestInput, guestError, "Guest name is required");
@@ -212,18 +250,26 @@ async function handleSave(e) {
 
   if (!valid) return;
 
+  const roomTypeBreakdown = getRoomTypeBreakdown();
+  const totalRooms = getTotalRooms();
+  const isOther = hasFoodCheckbox.checked && mealPlanSelect.value === "Other";
+
   const booking = {
     id: Date.now(),
     date: todayISO(),
+    receipt,
     booker: bookerSelect.value,
     guest,
     contact: contactInput.value.trim(),
-    room: roomSelect.value,
+    roomTypeBreakdown,
+    totalRooms,
     type: typeSelect.value,
     checkin: checkinInput.value,
     checkout: checkoutInput.value,
     amount,
     hasFood: hasFoodCheckbox.checked,
+    mealPlan: hasFoodCheckbox.checked ? mealPlanSelect.value : "",
+    mealPlanOther: isOther ? mealPlanOtherInput.value.trim() : "",
     foodAmount: hasFoodCheckbox.checked ? Number(foodAmountInput.value) || 0 : 0,
     foodBill: hasFoodCheckbox.checked ? foodBillInput.value.trim() : "",
     payment: paymentSelect.value,
@@ -307,6 +353,8 @@ function renderLedger() {
           const badgeClass = b.type === "online" ? "badge--online" : "badge--walkin";
           const cardClass = b.type === "walkin" ? "booking-card--walkin" : "";
           const total = bookingTotal(b);
+          const roomTypesLabel = roomTypeText(b.roomTypeBreakdown);
+          const meal = mealPlanLabel(b);
 
           return `
             <article class="booking-card ${cardClass}" data-id="${b.id}" tabindex="0" role="button" aria-expanded="false">
@@ -315,7 +363,7 @@ function renderLedger() {
                   <p class="booking-guest">${escapeHtml(b.guest)}</p>
                   <span class="badge ${badgeClass}">${typeLabel}</span>
                 </div>
-                <p class="booking-meta">${escapeHtml(b.room)}</p>
+                <p class="booking-meta">${escapeHtml(roomTypesLabel)}${b.totalRooms ? ` · ${b.totalRooms} room(s)` : ""}</p>
                 ${b.booker ? `<p class="booking-booker"><i class="ti ti-user-check" aria-hidden="true"></i>${escapeHtml(b.booker)}</p>` : ""}
                 <p class="booking-dates">
                   <i class="ti ti-calendar" aria-hidden="true"></i>
@@ -324,9 +372,13 @@ function renderLedger() {
                 <p class="booking-total">${formatCurrency(total)}</p>
               </div>
               <div class="booking-card-details">
+                <div class="detail-row"><span class="detail-label">Receipt no.</span><span class="detail-value">${escapeHtml(b.receipt || "—")}</span></div>
                 <div class="detail-row"><span class="detail-label">Booked by</span><span class="detail-value">${escapeHtml(b.booker || "—")}</span></div>
                 <div class="detail-row"><span class="detail-label">Contact</span><span class="detail-value">${escapeHtml(b.contact || "—")}</span></div>
+                <div class="detail-row"><span class="detail-label">Room type</span><span class="detail-value">${escapeHtml(roomTypesLabel)}</span></div>
+                <div class="detail-row"><span class="detail-label">Total rooms</span><span class="detail-value">${escapeHtml(b.totalRooms || "—")}</span></div>
                 <div class="detail-row"><span class="detail-label">Room amount</span><span class="detail-value">${formatCurrency(b.amount)}</span></div>
+                <div class="detail-row"><span class="detail-label">Meal plan</span><span class="detail-value">${meal ? escapeHtml(meal) : "—"}</span></div>
                 <div class="detail-row"><span class="detail-label">Food</span><span class="detail-value">${b.hasFood ? formatCurrency(b.foodAmount) + (b.foodBill ? ` (${escapeHtml(b.foodBill)})` : "") : "No"}</span></div>
                 <div class="detail-row"><span class="detail-label">Payment</span><span class="detail-value">${escapeHtml(b.payment || "—")}</span></div>
                 <div class="detail-row"><span class="detail-label">Notes</span><span class="detail-value">${escapeHtml(b.notes || "—")}</span></div>
@@ -398,31 +450,30 @@ function renderSummary() {
   $("#summary-online").textContent = formatCurrency(onlineTotal);
   $("#summary-walkin").textContent = formatCurrency(walkinTotal);
 
-  const roomTotals = {};
-  for (const room of CONFIG.ROOMS) {
-    roomTotals[room] = 0;
-  }
-
+  // Sum of actual room counts per type (not just booking counts), now
+  // that each booking records how many of each type was taken.
+  const roomTypeCounts = {};
   for (const b of monthBookings) {
-    if (roomTotals[b.room] !== undefined) {
-      roomTotals[b.room] += bookingTotal(b);
-    } else {
-      roomTotals[b.room] = bookingTotal(b);
+    const breakdown = (b.roomTypeBreakdown && b.roomTypeBreakdown.length)
+      ? b.roomTypeBreakdown
+      : [{ type: "Unspecified", count: b.totalRooms || 0 }];
+    for (const r of breakdown) {
+      roomTypeCounts[r.type] = (roomTypeCounts[r.type] || 0) + r.count;
     }
   }
 
   const roomList = $("#summary-rooms");
-  const entries = Object.entries(roomTotals).filter(([, total]) => total > 0);
+  const entries = Object.entries(roomTypeCounts).filter(([, count]) => count > 0).sort((a, b) => b[1] - a[1]);
 
   if (!entries.length) {
-    roomList.innerHTML = '<li class="room-list-empty">No room income this month yet.</li>';
+    roomList.innerHTML = '<li class="room-list-empty">No bookings this month yet.</li>';
   } else {
     roomList.innerHTML = entries
       .map(
-        ([room, total]) => `
+        ([type, count]) => `
           <li class="room-list-item">
-            <span class="room-list-name">${escapeHtml(room)}</span>
-            <span class="room-list-amount">${formatCurrency(total)}</span>
+            <span class="room-list-name">${escapeHtml(type)}</span>
+            <span class="room-list-amount">${count} room${count === 1 ? "" : "s"}</span>
           </li>
         `
       )
@@ -432,20 +483,31 @@ function renderSummary() {
 
 function init() {
   loadBookings();
-  populateRooms();
   populateBookers();
   checkinInput.value = todayISO();
   checkoutInput.value = todayISO();
   updateSaveButtonStyle();
   updateSyncDot();
+  updateTotalRoomsDisplay();
   renderLedger();
   renderSummary();
   retryUnsynced();
+
+  roomTypeCountInputs.forEach((input) => {
+    input.addEventListener("input", updateTotalRoomsDisplay);
+  });
 
   typeSelect.addEventListener("change", updateSaveButtonStyle);
 
   hasFoodCheckbox.addEventListener("change", () => {
     foodFields.hidden = !hasFoodCheckbox.checked;
+    if (!hasFoodCheckbox.checked) {
+      mealPlanOtherField.hidden = true;
+    }
+  });
+
+  mealPlanSelect.addEventListener("change", () => {
+    mealPlanOtherField.hidden = mealPlanSelect.value !== "Other";
   });
 
   entryForm.addEventListener("submit", handleSave);
